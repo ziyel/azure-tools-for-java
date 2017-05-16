@@ -22,35 +22,23 @@
 
 package com.microsoft.azure.hdinsight.projects;
 
-import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
-import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.openapi.util.Disposer;
-import org.jetbrains.plugins.scala.project.template.ScalaLibraryDescription$;
 
 import javax.swing.*;
 
 public class SparkScalaSettingsStep extends ModuleWizardStep {
     private HDInsightModuleBuilder builder;
     private ModuleWizardStep javaStep;
-    private LibraryOptionsPanel libraryPanel;
     private SparkVersionOptionsPanel sparkVersionOptionsPanel;
 
-    public SparkScalaSettingsStep(HDInsightModuleBuilder builder, SettingsStep settingsStep,
-                                  LibrariesContainer librariesContainer) {
+    public SparkScalaSettingsStep(HDInsightModuleBuilder builder, SettingsStep settingsStep) {
         this.builder = builder;
         this.javaStep = StdModuleTypes.JAVA.modifyProjectTypeStep(settingsStep, builder);
 
-        this.libraryPanel = new LibraryOptionsPanel(ScalaLibraryDescription$.MODULE$, "",
-                FrameworkLibraryVersionFilter.ALL, librariesContainer, false);
-        ((JButton) libraryPanel.getSimplePanel().getComponent(1)).setText("Select...");
-
         this.sparkVersionOptionsPanel = new SparkVersionOptionsPanel();
-        settingsStep.addSettingsField("Scala S\u001BDK:", libraryPanel.getSimplePanel());
         settingsStep.addSettingsField("Spark \u001BVersion:", this.sparkVersionOptionsPanel);
     }
 
@@ -61,7 +49,6 @@ public class SparkScalaSettingsStep extends ModuleWizardStep {
 
     @Override
     public void updateDataModel() {
-        this.builder.setScalaLibraryCompositionSettings(libraryPanel.apply());
         this.builder.setSparkVersion(this.sparkVersionOptionsPanel.apply());
 
         javaStep.updateDataModel();
@@ -76,6 +63,5 @@ public class SparkScalaSettingsStep extends ModuleWizardStep {
     public void disposeUIResources() {
         super.disposeUIResources();
         javaStep.disposeUIResources();
-        Disposer.dispose(libraryPanel);
     }
 }

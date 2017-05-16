@@ -29,8 +29,6 @@ import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.IconLoader;
@@ -46,15 +44,9 @@ import com.microsoft.azure.hdinsight.projects.template.CustomTemplateInfo;
 import com.microsoft.azure.hdinsight.projects.template.TemplatesUtil;
 import com.microsoft.azuretools.telemetry.AppInsightsClient;
 import com.microsoft.intellij.hdinsight.messages.HDInsightBundle;
-import com.microsoft.tooling.msservices.components.DefaultLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.net.URI;
-import java.util.ArrayList;
 
 public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleBuilderListener {
     private HDInsightTemplateItem selectedTemplate;
@@ -62,27 +54,11 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
     private LibraryCompositionSettings scalaLibraryCompositionSettings;
     private SparkVersion sparkVersion;
 
-    private boolean isScalaSdkIncluded = false;
-
     public static final String UniqueKeyName = "UniqueKey";
     public static final String UniqueKeyValue = "HDInsightTool";
 
     public HDInsightModuleBuilder() {
         this.addListener(this);
-        this.addModuleConfigurationUpdater(new ModuleConfigurationUpdater() {
-            @Override
-            public void update(Module module, ModifiableRootModel modifiableRootModel) {
-                int librarySize = getOrderEntriesLength(modifiableRootModel);
-                if (scalaLibraryCompositionSettings != null) {
-                    scalaLibraryCompositionSettings.addLibraries(modifiableRootModel, new ArrayList<Library>(), librariesContainer);
-                    if (getOrderEntriesLength(modifiableRootModel) != librarySize) {
-                        isScalaSdkIncluded = true;
-                    }
-                } else {
-                    isScalaSdkIncluded = true;
-                }
-            }
-        });
     }
 
     public void setSelectedTemplate(HDInsightTemplateItem selectedTemplate) {
@@ -136,7 +112,7 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
         } else if (this.selectedTemplate.getType() == HDInsightTemplatesType.Scala ||
                 this.selectedTemplate.getType() == HDInsightTemplatesType.ScalaClusterSample ||
                 this.selectedTemplate.getType() == HDInsightTemplatesType.ScalaLocalSample) {
-            return new SparkScalaSettingsStep(this, settingsStep, this.librariesContainer);
+            return new SparkScalaSettingsStep(this, settingsStep);
         } else {
             return new SparkJavaSettingsStep(this, settingsStep);
         }
@@ -154,7 +130,6 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
             new MavenProjectGenerator(module, templatesType, sparkVersion).generate();
         }
 
-        CheckSDK(templatesType);
         addTelemetry(templatesType);
     }
 
@@ -163,21 +138,6 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
             module.setOption(UniqueKeyName, UniqueKeyValue);
         }
         TemplatesUtil.createTemplateSampleFiles(module, info);
-    }
-
-    private void CheckSDK(HDInsightTemplatesType templatesType) {
-        if (templatesType == HDInsightTemplatesType.Scala ||
-                templatesType == HDInsightTemplatesType.ScalaClusterSample ||
-                templatesType == HDInsightTemplatesType.ScalaLocalSample) {
-            if (!isScalaSdkIncluded) {
-                // TODO update error message
-                showErrorMessageWithLink(withoutSParkOrScalaSDKErrorMessage, "Project SDK Check", sparkDownloadLink);
-            }
-        }
-    }
-
-    private int getOrderEntriesLength(ModifiableRootModel modifiableRootModel) {
-        return modifiableRootModel.getOrderEntries().length;
     }
 
     private void addTelemetry(HDInsightTemplatesType templatesType){
@@ -199,30 +159,5 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
         CompositePackagingElement root = factory.createArchive("default_artifact.jar");
         root.addOrFindChild(factory.createModuleOutput(module));
         ArtifactManager.getInstance(project).addArtifact(module.getName() + "_DefaultArtifact", type, root);
-    }
-
-    private static String sparkDownloadLink = "http://go.microsoft.com/fwlink/?LinkId=723585";
-    private static String withoutSParkOrScalaSDKErrorMessage = String.format("<HTML>Failed to load Spark SDK and you need to add Scala/Spark SDK manually. Please download the Spark assembly from <FONT color=\\\"#000099\\\"><U>%s</U></FONT> and then add it manually.</HTML>", sparkDownloadLink);
-
-    private void showErrorMessageWithLink(String message, String title, final String link){
-        JLabel label = new JLabel(message);
-        label.setOpaque(false);
-        label.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                try {
-                    URI uri = new URI(link);
-                    if (Desktop.isDesktopSupported()) {
-                        Desktop.getDesktop().browse(uri);
-                    } else {
-                        DefaultLoader.getUIHelper().showError("Couldn't open browser in current OS system", "Open URL in Browser");
-                    }
-                } catch (Exception exception) {
-                    DefaultLoader.getUIHelper().showException("An error occurred while attempting to open Browser.", exception, "Error Open Browser", false, true);
-                }
-            }
-        });
-
-        JOptionPane.showMessageDialog(null, label, title, JOptionPane.ERROR_MESSAGE);
     }
 }
