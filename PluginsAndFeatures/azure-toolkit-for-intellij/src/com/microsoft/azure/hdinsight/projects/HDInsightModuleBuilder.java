@@ -47,6 +47,8 @@ import com.microsoft.intellij.hdinsight.messages.HDInsightBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleBuilderListener {
     private HDInsightTemplateItem selectedTemplate;
@@ -130,7 +132,7 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
             new MavenProjectGenerator(module, templatesType, sparkVersion).generate();
         }
 
-        addTelemetry(templatesType);
+        addTelemetry(templatesType, sparkVersion);
     }
 
     private void customTemplateModuleCreated(Module module, CustomTemplateInfo info) {
@@ -140,15 +142,18 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
         TemplatesUtil.createTemplateSampleFiles(module, info);
     }
 
-    private void addTelemetry(HDInsightTemplatesType templatesType){
+    private void addTelemetry(HDInsightTemplatesType templatesType, SparkVersion sparkVersion){
+        Map<String, String> hdiProperties = new HashMap<String, String>();
+        hdiProperties.put("Spark Version", sparkVersion.toString());
+
         if(templatesType == HDInsightTemplatesType.Java){
-            AppInsightsClient.create(HDInsightBundle.message("SparkProjectSystemJavaCreation"), null);
+            AppInsightsClient.create(HDInsightBundle.message("SparkProjectSystemJavaCreation"), null, hdiProperties);
         }else if(templatesType == HDInsightTemplatesType.JavaLocalSample){
-            AppInsightsClient.create(HDInsightBundle.message("SparkProjectSystemJavaSampleCreation"), null);
+            AppInsightsClient.create(HDInsightBundle.message("SparkProjectSystemJavaSampleCreation"), null, hdiProperties);
         }else if(templatesType == HDInsightTemplatesType.Scala) {
-            AppInsightsClient.create(HDInsightBundle.message("SparkProjectSystemScalaCreation"), null);
+            AppInsightsClient.create(HDInsightBundle.message("SparkProjectSystemScalaCreation"), null, hdiProperties);
         }else if(templatesType == HDInsightTemplatesType.ScalaClusterSample || templatesType == HDInsightTemplatesType.ScalaLocalSample){
-            AppInsightsClient.create(HDInsightBundle.message("SparkProjectSystemScalaSampleCreation"), null);
+            AppInsightsClient.create(HDInsightBundle.message("SparkProjectSystemScalaSampleCreation"), null, hdiProperties);
         }
     }
 
