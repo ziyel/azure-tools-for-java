@@ -40,7 +40,6 @@ import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.impl.artifacts.JarArtifactType;
 import com.intellij.platform.ProjectTemplate;
 import com.microsoft.azure.hdinsight.common.CommonConst;
-import com.microsoft.azure.hdinsight.projects.samples.MavenProjectGenerator;
 import com.microsoft.azure.hdinsight.projects.ui.HDInsightProjectTypeStep;
 import com.microsoft.azuretools.telemetry.AppInsightsClient;
 import com.microsoft.intellij.hdinsight.messages.HDInsightBundle;
@@ -54,9 +53,11 @@ import java.util.*;
 
 public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleBuilderListener {
     private HDInsightProjectTemplate selectedTemplate;
+    private HDInsightExternalSystem selectedExternalSystem;
     private List<ProjectTemplate> templates;
     private SparkVersion sparkVersion;
     private ScalaPluginStatus scalaPluginStatus;
+    private String sbtVersion;
 
     private static final String SCALA_PLUGIN_ID = "org.intellij.scala";
     private static final String SCALA_PLUGIN_INSTALL_MSG = "<HTML>No Scala Intellij plugin found. " +
@@ -68,13 +69,12 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
 
     public HDInsightModuleBuilder() {
         this.scalaPluginStatus = ScalaPluginStatus.INSTALLED;
+        this.selectedExternalSystem = HDInsightExternalSystem.MAVEN;
         initTemplates();
         this.addListener(this);
     }
 
-    public void setSparkVersion(SparkVersion sparkVersion) {
-        this.sparkVersion = sparkVersion;
-    }
+
 
     public ScalaPluginStatus getScalaPluginStatus() {
         return scalaPluginStatus;
@@ -142,17 +142,42 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
     public void moduleCreated(@NotNull Module module) {
         module.setOption(UniqueKeyName, UniqueKeyValue);
         createDefaultArtifact(module);
-        new MavenProjectGenerator(module, this.selectedTemplate.getTemplateType(), sparkVersion).generate();
+        switch(this.selectedExternalSystem) {
+            case MAVEN:
+                new MavenProjectGenerator(module, this.selectedTemplate.getTemplateType(), sparkVersion).generate();
+                break;
+            case SBT:
+                new SbtProjectGenerator(module, this.selectedTemplate.getTemplateType(), sparkVersion, sbtVersion).generate();
+                break;
+            default:
+                new MavenProjectGenerator(module, this.selectedTemplate.getTemplateType(), sparkVersion).generate();
+        }
 
         addTelemetry(this.selectedTemplate.getTemplateType(), sparkVersion);
+    }
+
+    public void setSparkVersion(SparkVersion sparkVersion) {
+        this.sparkVersion = sparkVersion;
     }
 
     public void setSelectedTemplate(HDInsightProjectTemplate selectedTemplate) {
         this.selectedTemplate = selectedTemplate;
     }
 
+    public void setSbtVersion(String sbtVersion) {
+        this.sbtVersion = sbtVersion;
+    }
+
+    public void setSelectedExternalSystem(HDInsightExternalSystem selectedExternalSystem) {
+        this.selectedExternalSystem = selectedExternalSystem;
+    }
+
     public List<ProjectTemplate> getTemplates() {
         return this.templates;
+    }
+
+    public HDInsightExternalSystem getSelectedExternalSystem() {
+        return this.selectedExternalSystem;
     }
 
     private void showScalaPluginInstallMsg() {

@@ -25,6 +25,7 @@ package com.microsoft.azure.hdinsight.projects.ui;
 import com.intellij.ide.projectWizard.ProjectTemplateList;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.Disposable;
+import com.microsoft.azure.hdinsight.projects.HDInsightExternalSystem;
 import com.microsoft.azure.hdinsight.projects.HDInsightModuleBuilder;
 import com.microsoft.azure.hdinsight.projects.HDInsightProjectTemplate;
 
@@ -34,10 +35,14 @@ public class HDInsightProjectTypeStep extends ModuleWizardStep implements Dispos
     private HDInsightModuleBuilder moduleBuilder;
     private JPanel mainPanel;
     private ProjectTemplateList templateList;
+    private JComboBox externalSystems;
 
     public HDInsightProjectTypeStep(HDInsightModuleBuilder moduleBuilder) {
         this.moduleBuilder = moduleBuilder;
-        templateList.setTemplates(moduleBuilder.getTemplates(), false);
+        this.templateList.setTemplates(moduleBuilder.getTemplates(), false);
+        this.externalSystems.addItem(HDInsightExternalSystem.MAVEN);
+        this.externalSystems.addItem(HDInsightExternalSystem.SBT);
+        this.externalSystems.setSelectedItem(HDInsightExternalSystem.MAVEN);
     }
 
     @Override
@@ -48,6 +53,7 @@ public class HDInsightProjectTypeStep extends ModuleWizardStep implements Dispos
     @Override
     public void updateDataModel() {
         this.moduleBuilder.setSelectedTemplate((HDInsightProjectTemplate) this.templateList.getSelectedTemplate());
+        this.moduleBuilder.setSelectedExternalSystem((HDInsightExternalSystem) this.externalSystems.getSelectedItem());
     }
 
     @Override

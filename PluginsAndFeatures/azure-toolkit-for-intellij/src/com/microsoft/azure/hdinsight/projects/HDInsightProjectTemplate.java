@@ -90,7 +90,6 @@ public class HDInsightProjectTemplate implements ProjectTemplate {
         }
     }
 
-    @NotNull
     @Override
     public AbstractModuleBuilder createModuleBuilder() {
         return null;

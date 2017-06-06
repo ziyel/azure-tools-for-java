@@ -33,6 +33,7 @@ public class SparkScalaSettingsStep extends ModuleWizardStep {
     private HDInsightModuleBuilder builder;
     private ModuleWizardStep javaStep;
     private SparkVersionOptionsPanel sparkVersionOptionsPanel;
+    private SbtVersionOptionsPanel sbtVersionOptionsPanel;
 
     public SparkScalaSettingsStep(HDInsightModuleBuilder builder, SettingsStep settingsStep) {
         this.builder = builder;
@@ -40,6 +41,12 @@ public class SparkScalaSettingsStep extends ModuleWizardStep {
 
         this.sparkVersionOptionsPanel = new SparkVersionOptionsPanel();
         settingsStep.addSettingsField("Spark \u001BVersion:", this.sparkVersionOptionsPanel);
+
+        if (builder.getSelectedExternalSystem() == HDInsightExternalSystem.SBT) {
+            this.sbtVersionOptionsPanel = new SbtVersionOptionsPanel();
+            settingsStep.addSettingsField("Sbt Versio\u001Bn:", this.sbtVersionOptionsPanel);
+            this.sbtVersionOptionsPanel.updateSbtVersions();
+        }
     }
 
     @Override
@@ -50,6 +57,9 @@ public class SparkScalaSettingsStep extends ModuleWizardStep {
     @Override
     public void updateDataModel() {
         this.builder.setSparkVersion(this.sparkVersionOptionsPanel.apply());
+        if (this.sbtVersionOptionsPanel != null) {
+            this.builder.setSbtVersion(this.sbtVersionOptionsPanel.apply());
+        }
 
         javaStep.updateDataModel();
     }

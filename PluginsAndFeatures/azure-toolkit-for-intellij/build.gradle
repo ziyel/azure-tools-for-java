@@ -45,7 +45,7 @@ findbugs {
 intellij {
     pluginName 'azure-toolkit-for-intellij'
     version intellij_version
-    plugins = ['maven']
+    plugins = ['maven', 'org.intellij.scala:2017.1.15']
 	downloadSources Boolean.valueOf(sources)
 }
 

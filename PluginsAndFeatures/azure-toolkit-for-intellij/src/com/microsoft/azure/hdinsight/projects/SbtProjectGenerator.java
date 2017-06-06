@@ -20,46 +20,37 @@
  * SOFTWARE.
  */
 
-package com.microsoft.azure.hdinsight.projects.samples;
+package com.microsoft.azure.hdinsight.projects;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.microsoft.azure.hdinsight.common.StreamUtil;
-import com.microsoft.azure.hdinsight.projects.HDInsightTemplatesType;
-import com.microsoft.azure.hdinsight.projects.SparkVersion;
-import com.intellij.openapi.util.io.FileUtil;
+import com.microsoft.azure.hdinsight.projects.util.ProjectSampleUtil;
 import com.microsoft.azuretools.azurecommons.helpers.NotNull;
 import com.microsoft.tooling.msservices.components.DefaultLoader;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 
-public class MavenProjectGenerator {
+public class SbtProjectGenerator {
     private Module module;
     private HDInsightTemplatesType templatesType;
     private SparkVersion sparkVersion;
+    private String sbtVersion;
 
-    public MavenProjectGenerator(@NotNull Module module,
-                                 @NotNull HDInsightTemplatesType templatesType,
-                                 @NotNull SparkVersion sparkVersion) {
+    public SbtProjectGenerator(@NotNull Module module,
+                               @NotNull HDInsightTemplatesType templatesType,
+                               @NotNull SparkVersion sparkVersion,
+                               @NotNull String sbtVersion) {
         this.module = module;
         this.templatesType = templatesType;
         this.sparkVersion = sparkVersion;
+        this.sbtVersion = sbtVersion;
     }
 
     public void generate() {
         String root = ProjectSampleUtil.getRootOrSourceFolder(this.module, false);
-
         try {
             createDirectories(root);
-            createPom(root);
             copySamples(root);
-            importMavenProject();
         } catch (Exception e) {
             DefaultLoader.getUIHelper().showError("Failed to create project", "Create Sample Project");
         }
@@ -80,33 +71,6 @@ public class MavenProjectGenerator {
                 VfsUtil.createDirectories(root + "/src/main/resources");
                 VfsUtil.createDirectories(root + "/src/test/scala");
                 break;
-        }
-    }
-
-    private void createPom(String root) throws Exception {
-        File file = null;
-        switch (this.sparkVersion) {
-            case SPARK_1_5_2:
-                file = StreamUtil.getResourceFile("/hdinsight/templates/pom/spark_1_5_2_pom.xml");
-                break;
-            case SPARK_1_6_2:
-                file = StreamUtil.getResourceFile("/hdinsight/templates/pom/spark_1_6_2_pom.xml");
-                break;
-            case SPARK_1_6_3:
-                file = StreamUtil.getResourceFile("/hdinsight/templates/pom/spark_1_6_3_pom.xml");
-                break;
-            case SPARK_2_0_2:
-                file = StreamUtil.getResourceFile("/hdinsight/templates/pom/spark_2_0_2_pom.xml");
-                break;
-            case SPARK_2_1_0:
-                file = StreamUtil.getResourceFile("/hdinsight/templates/pom/spark_2_1_0_pom.xml");
-                break;
-        }
-
-        if (null == file) {
-            DefaultLoader.getUIHelper().showError("Failed to get the sample resource folder for project", "Create Sample Project");
-        } else {
-            FileUtil.copy(file, new File(root + "/pom.xml"));
         }
     }
 
@@ -135,17 +99,5 @@ public class MavenProjectGenerator {
                 }, root + "/data");
                 break;
         }
-    }
-
-    private void importMavenProject() throws ConfigurationException {
-        Project project = this.module.getProject();
-        String baseDirPath = project.getBasePath();
-        MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-
-        File pomFile = new File(baseDirPath + File.separator + "pom.xml");
-        VirtualFile pom = VfsUtil.findFileByIoFile(pomFile, true);
-
-        manager.addManagedFiles(Collections.singletonList(pom));
-        manager.scheduleImportAndResolve();
     }
 }
