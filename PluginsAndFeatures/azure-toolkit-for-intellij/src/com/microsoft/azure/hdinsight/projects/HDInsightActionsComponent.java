@@ -22,7 +22,6 @@
 package com.microsoft.azure.hdinsight.projects;
 
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.Constraints;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -38,7 +37,6 @@ public class HDInsightActionsComponent implements ApplicationComponent {
 
     @Override
     public void disposeComponent() {
-    // do nothing
     }
 
     @NotNull

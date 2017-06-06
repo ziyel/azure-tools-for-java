@@ -26,6 +26,5 @@ public enum HDInsightTemplatesType {
     JavaLocalSample,
     Scala,
     ScalaLocalSample,
-    ScalaClusterSample,
-    CustomTemplate
+    ScalaClusterSample
 }

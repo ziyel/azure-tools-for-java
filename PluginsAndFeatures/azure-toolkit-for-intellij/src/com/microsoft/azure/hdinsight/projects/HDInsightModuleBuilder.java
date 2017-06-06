@@ -21,49 +21,40 @@
  */
 package com.microsoft.azure.hdinsight.projects;
 
-import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleBuilderListener;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.SettingsStep;
+import com.intellij.ide.util.projectWizard.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.impl.artifacts.JarArtifactType;
+import com.intellij.platform.ProjectTemplate;
 import com.microsoft.azure.hdinsight.common.CommonConst;
 import com.microsoft.azure.hdinsight.projects.samples.MavenProjectGenerator;
-import com.microsoft.azure.hdinsight.projects.template.CustomHDInsightTemplateItem;
-import com.microsoft.azure.hdinsight.projects.template.CustomModuleWizardSetup;
-import com.microsoft.azure.hdinsight.projects.template.CustomTemplateInfo;
-import com.microsoft.azure.hdinsight.projects.template.TemplatesUtil;
+import com.microsoft.azure.hdinsight.projects.ui.HDInsightProjectTypeStep;
 import com.microsoft.azuretools.telemetry.AppInsightsClient;
 import com.microsoft.intellij.hdinsight.messages.HDInsightBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleBuilderListener {
-    private HDInsightTemplateItem selectedTemplate;
-    private LibrariesContainer librariesContainer;
-    private LibraryCompositionSettings scalaLibraryCompositionSettings;
+    private HDInsightProjectTemplate selectedTemplate;
+    private List<ProjectTemplate> templates;
     private SparkVersion sparkVersion;
     private ScalaPluginStatus scalaPluginStatus;
 
@@ -77,15 +68,8 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
 
     public HDInsightModuleBuilder() {
         this.scalaPluginStatus = ScalaPluginStatus.INSTALLED;
+        initTemplates();
         this.addListener(this);
-    }
-
-    public void setSelectedTemplate(HDInsightTemplateItem selectedTemplate) {
-        this.selectedTemplate = selectedTemplate;
-    }
-
-    public void setScalaLibraryCompositionSettings(LibraryCompositionSettings scalaLibraryCompositionSettings) {
-        this.scalaLibraryCompositionSettings = scalaLibraryCompositionSettings;
     }
 
     public void setSparkVersion(SparkVersion sparkVersion) {
@@ -128,11 +112,7 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
 
     @Override
     public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
-        this.librariesContainer = LibrariesContainerFactory.createContainer(settingsStep.getContext().getProject());
-
-        switch (this.selectedTemplate.getType()) {
-            case CustomTemplate:
-                return new CustomModuleWizardSetup(this, settingsStep, librariesContainer, ((CustomHDInsightTemplateItem) this.selectedTemplate).getTemplateInfo());
+        switch (this.selectedTemplate.getTemplateType()) {
             case Scala:
             case ScalaClusterSample:
             case ScalaLocalSample:
@@ -150,26 +130,29 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
         }
     }
 
+    @Nullable
     @Override
-    public void moduleCreated(@NotNull Module module) {
-        HDInsightTemplatesType templatesType = this.selectedTemplate.getType();
-
-        if (templatesType == HDInsightTemplatesType.CustomTemplate) {
-            customTemplateModuleCreated(module, ((CustomHDInsightTemplateItem) this.selectedTemplate).getTemplateInfo());
-        } else {
-            module.setOption(UniqueKeyName, UniqueKeyValue);
-            createDefaultArtifact(module);
-            new MavenProjectGenerator(module, templatesType, sparkVersion).generate();
-        }
-
-        addTelemetry(templatesType, sparkVersion);
+    public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
+        HDInsightProjectTypeStep step = new HDInsightProjectTypeStep(this);
+        Disposer.register(parentDisposable, step);
+        return step;
     }
 
-    private void customTemplateModuleCreated(Module module, CustomTemplateInfo info) {
-        if (info.isSparkProject()) {
-            module.setOption(UniqueKeyName, UniqueKeyValue);
-        }
-        TemplatesUtil.createTemplateSampleFiles(module, info);
+    @Override
+    public void moduleCreated(@NotNull Module module) {
+        module.setOption(UniqueKeyName, UniqueKeyValue);
+        createDefaultArtifact(module);
+        new MavenProjectGenerator(module, this.selectedTemplate.getTemplateType(), sparkVersion).generate();
+
+        addTelemetry(this.selectedTemplate.getTemplateType(), sparkVersion);
+    }
+
+    public void setSelectedTemplate(HDInsightProjectTemplate selectedTemplate) {
+        this.selectedTemplate = selectedTemplate;
+    }
+
+    public List<ProjectTemplate> getTemplates() {
+        return this.templates;
     }
 
     private void showScalaPluginInstallMsg() {
@@ -189,6 +172,15 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
             }
         });
         JOptionPane.showMessageDialog(null, label, "Scala Plugin Check", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void initTemplates() {
+        this.templates = new ArrayList<>();
+        this.templates.add(new HDInsightProjectTemplate(HDInsightTemplatesType.Java));
+        this.templates.add(new HDInsightProjectTemplate(HDInsightTemplatesType.JavaLocalSample));
+        this.templates.add(new HDInsightProjectTemplate(HDInsightTemplatesType.Scala));
+        this.templates.add(new HDInsightProjectTemplate(HDInsightTemplatesType.ScalaLocalSample));
+        this.templates.add(new HDInsightProjectTemplate(HDInsightTemplatesType.ScalaClusterSample));
     }
 
     private void showRestartMsg() {

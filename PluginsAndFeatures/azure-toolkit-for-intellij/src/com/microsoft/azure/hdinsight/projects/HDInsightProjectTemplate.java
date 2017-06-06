@@ -26,38 +26,41 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.platform.ProjectTemplate;
 import com.microsoft.azure.hdinsight.common.CommonConst;
 import com.microsoft.azure.hdinsight.common.StreamUtil;
-import com.microsoft.azure.hdinsight.projects.template.CustomHDInsightTemplateItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
 
 public class HDInsightProjectTemplate implements ProjectTemplate {
-    private HDInsightTemplateItem templateItem;
+    private HDInsightTemplatesType templateType;
 
-    private static HashMap<HDInsightTemplatesType, ImageIcon> imageMap = new HashMap<HDInsightTemplatesType, ImageIcon>() {
-        {
-            put(HDInsightTemplatesType.Java, StreamUtil.getImageResourceFile(CommonConst.JavaProjectIconPath));
-            put(HDInsightTemplatesType.Scala, StreamUtil.getImageResourceFile(CommonConst.ScalaProjectIconPath));
-            put(HDInsightTemplatesType.JavaLocalSample, StreamUtil.getImageResourceFile(CommonConst.JavaProjectIconPath));
-            put(HDInsightTemplatesType.ScalaClusterSample, StreamUtil.getImageResourceFile(CommonConst.ScalaProjectIconPath));
-            put(HDInsightTemplatesType.ScalaLocalSample, StreamUtil.getImageResourceFile(CommonConst.ScalaProjectIconPath));
-        }
-    };
-
-    public HDInsightProjectTemplate(HDInsightTemplateItem parameterItem) {
-        this.templateItem = parameterItem;
+    public HDInsightProjectTemplate(HDInsightTemplatesType templatesType) {
+        this.templateType = templatesType;
     }
 
     @NotNull
     @Override
-    public String getName() { return templateItem.getDisplayText(); }
+    public String getName() {
+        switch (this.templateType) {
+            case Java:
+                return "Spark on HDInsight (Java)";
+            case Scala:
+                return "Spark on HDInsight (Scala)";
+            case JavaLocalSample:
+                return "Spark on HDInsight Local Run Sample (Java)";
+            case ScalaLocalSample:
+                return "Spark on HDInsight Local Run Sample (Scala)";
+            case ScalaClusterSample:
+                return "Spark on HDInsight Cluster Run Sample (Scala)";
+            default:
+                return "HDInsight Tools";
+        }
+    }
 
     @Nullable
     @Override
     public String getDescription() {
-        switch (templateItem.getType()) {
+        switch (this.templateType) {
             case Java:
             case Scala:
                 return "HDInsight Spark blank module.";
@@ -74,22 +77,32 @@ public class HDInsightProjectTemplate implements ProjectTemplate {
 
     @Override
     public Icon getIcon() {
-        if(this.templateItem instanceof CustomHDInsightTemplateItem) {
-            return new ImageIcon(((CustomHDInsightTemplateItem) this.templateItem).getTemplateInfo().getIconPath());
-        } else {
-            return imageMap.get(templateItem.getType());
+        switch (this.templateType) {
+            case Java:
+            case JavaLocalSample:
+                return StreamUtil.getImageResourceFile(CommonConst.JavaProjectIconPath);
+            case Scala:
+            case ScalaLocalSample:
+            case ScalaClusterSample:
+                return StreamUtil.getImageResourceFile(CommonConst.ScalaProjectIconPath);
+            default:
+                return StreamUtil.getImageResourceFile(CommonConst.JavaProjectIconPath);
         }
     }
 
     @NotNull
     @Override
     public AbstractModuleBuilder createModuleBuilder() {
-        HDInsightModuleBuilder builder = new HDInsightModuleBuilder();
-        builder.setSelectedTemplate(templateItem);
-        return builder;
+        return null;
     }
 
     @Nullable
     @Override
-    public ValidationInfo validateSettings() { return null; }
+    public ValidationInfo validateSettings() {
+        return null;
+    }
+
+    public HDInsightTemplatesType getTemplateType() {
+        return templateType;
+    }
 }
