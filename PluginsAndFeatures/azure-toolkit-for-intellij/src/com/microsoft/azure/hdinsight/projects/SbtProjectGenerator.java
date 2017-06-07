@@ -22,21 +22,16 @@
 
 package com.microsoft.azure.hdinsight.projects;
 
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
-import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.microsoft.azure.hdinsight.common.StreamUtil;
 import com.microsoft.azure.hdinsight.projects.util.ProjectSampleUtil;
 import com.microsoft.azuretools.azurecommons.helpers.NotNull;
 import com.microsoft.tooling.msservices.components.DefaultLoader;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.sbt.project.SbtProjectSystem;
 import org.jetbrains.sbt.project.settings.SbtProjectSettings;
 import org.jetbrains.sbt.settings.SbtSystemSettings;
@@ -121,8 +116,12 @@ public class SbtProjectGenerator {
     }
 
     private void generateSbt(String root) throws IOException {
-        File file = StreamUtil.getResourceFile("/hdinsight/templates/sbt/build.sbt");
-        FileUtil.copy(file, new File(root + "/build.sbt"));
+        File sbt = new File(root + File.separator + "build.sbt");
+        FileUtil.writeToFile(sbt, generateSbtFileContent());
+    }
+
+    private String generateSbtFileContent() {
+        return "balabala";
     }
 
     private void importSbtProject(String root) {
