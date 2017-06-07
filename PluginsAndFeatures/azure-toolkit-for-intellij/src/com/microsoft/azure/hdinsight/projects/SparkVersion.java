@@ -23,20 +23,30 @@
 package com.microsoft.azure.hdinsight.projects;
 
 public enum SparkVersion {
-    SPARK_1_5_2("Spark 1.5.2 (Scala 2.10.4)"),
-    SPARK_1_6_2("Spark 1.6.2 (Scala 2.10.5)"),
-    SPARK_1_6_3("Spark 1.6.3 (Scala 2.10.5)"),
-    SPARK_2_0_2("Spark 2.0.2 (Scala 2.11.8)"),
-    SPARK_2_1_0("Spark 2.1.0 (Scala 2.11.8)");
+    SPARK_1_5_2("1.5.2", "2.10.4"),
+    SPARK_1_6_2("1.6.2", "2.10.5"),
+    SPARK_1_6_3("1.6.3", "2.10.5"),
+    SPARK_2_0_2("2.0.2", "2.11.8"),
+    SPARK_2_1_0("2.1.0", "2.11.8");
 
-    private final String displayName;
+    private final String sparkVersion;
+    private final String scalaVersion;
 
-    SparkVersion(String name) {
-        displayName = name;
+    SparkVersion(String sparkVersion, String scalaVersion) {
+        this.sparkVersion = sparkVersion;
+        this.scalaVersion = scalaVersion;
     }
 
     @Override
     public String toString() {
-        return displayName;
+        return String.format("Spark %s (Scala %s)", this.sparkVersion, this.scalaVersion);
+    }
+
+    public String getSparkVersion() {
+        return sparkVersion;
+    }
+
+    public String getScalaVersion() {
+        return scalaVersion;
     }
 }

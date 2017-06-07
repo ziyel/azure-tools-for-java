@@ -22,37 +22,24 @@
 
 package com.microsoft.azure.hdinsight.projects;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.microsoft.azure.hdinsight.common.StreamUtil;
 import com.microsoft.azure.hdinsight.projects.util.ProjectSampleUtil;
 import com.microsoft.azuretools.azurecommons.helpers.NotNull;
 import com.microsoft.tooling.msservices.components.DefaultLoader;
-import hidden.edu.emory.mathcs.backport.java.util.Collections;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.sbt.project.SbtProjectSystem;
 import org.jetbrains.sbt.project.settings.SbtProjectSettings;
-import org.jetbrains.sbt.project.settings.SbtProjectSettings$;
 import org.jetbrains.sbt.settings.SbtSystemSettings;
-import scala.Option;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,7 +48,8 @@ import java.util.HashSet;
 public class SbtProjectGenerator {
     private Module module;
     private HDInsightTemplatesType templatesType;
-    private SparkVersion sparkVersion;
+    private String sparkVersion;
+    private String scalaVersion;
     private String sbtVersion;
 
     public SbtProjectGenerator(@NotNull Module module,
@@ -70,7 +58,8 @@ public class SbtProjectGenerator {
                                @NotNull String sbtVersion) {
         this.module = module;
         this.templatesType = templatesType;
-        this.sparkVersion = sparkVersion;
+        this.sparkVersion = sparkVersion.getSparkVersion();
+        this.scalaVersion = sparkVersion.getScalaVersion();
         this.sbtVersion = sbtVersion;
     }
 
@@ -79,20 +68,11 @@ public class SbtProjectGenerator {
         try {
             createDirectories(root);
             copySamples(root);
-            test(root);
+            generateSbt(root);
+            importSbtProject(root);
         } catch (Exception e) {
             DefaultLoader.getUIHelper().showError("Failed to create project", "Create Sample Project");
         }
-    }
-
-    private void test(String root) throws IOException {
-        File file = StreamUtil.getResourceFile("/hdinsight/templates/sbt/build.sbt");
-        FileUtil.copy(file, new File(root + "/build.sbt"));
-
-        Project project = this.module.getProject();
-        ExternalSystemUtil.refreshProject(project,
-                SbtProjectSystem.Id(), root,
-                false, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
     }
 
     private void createDirectories(String root) throws IOException {
@@ -138,5 +118,26 @@ public class SbtProjectGenerator {
                 }, root + "/data");
                 break;
         }
+    }
+
+    private void generateSbt(String root) throws IOException {
+        File file = StreamUtil.getResourceFile("/hdinsight/templates/sbt/build.sbt");
+        FileUtil.copy(file, new File(root + "/build.sbt"));
+    }
+
+    private void importSbtProject(String root) {
+        Project project = this.module.getProject();
+
+        ExternalSystemUtil.refreshProject(project,
+                SbtProjectSystem.Id(), root,
+                false, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+
+        SbtProjectSettings sbtProjectSettings = new SbtProjectSettings();
+        sbtProjectSettings.setExternalProjectPath(root);
+
+        SbtSystemSettings sbtSystemSettings = SbtSystemSettings.getInstance(project);
+        HashSet<SbtProjectSettings> projects = ContainerUtilRt.newHashSet(sbtSystemSettings.getLinkedProjectsSettings());
+        projects.add(sbtProjectSettings);
+        sbtSystemSettings.setLinkedProjectsSettings(projects);
     }
 }
