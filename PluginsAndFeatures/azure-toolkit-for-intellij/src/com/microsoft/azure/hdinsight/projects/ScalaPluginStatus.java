@@ -23,6 +23,5 @@ package com.microsoft.azure.hdinsight.projects;
  */
 public enum ScalaPluginStatus {
     NOT_INSTALLED,
-    INSTALLED,
-    NEED_RESTART
+    INSTALLED
 }

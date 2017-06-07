@@ -39,7 +39,7 @@ public class SparkJavaSettingsStep extends ModuleWizardStep {
         this.javaStep = StdModuleTypes.JAVA.modifyProjectTypeStep(settingsStep, builder);
 
         this.sparkVersionOptionsPanel = new SparkVersionOptionsPanel();
-        settingsStep.addSettingsField("Spark \u001BVersion:", sparkVersionOptionsPanel);
+        settingsStep.addSettingsField("Spark \u001Bversion:", sparkVersionOptionsPanel);
     }
 
     @Override

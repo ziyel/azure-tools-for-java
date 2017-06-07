@@ -29,14 +29,14 @@ public enum SparkVersion {
     SPARK_2_0_2("Spark 2.0.2 (Scala 2.11.8)"),
     SPARK_2_1_0("Spark 2.1.0 (Scala 2.11.8)");
 
-    private final String presentationName;
+    private final String displayName;
 
     SparkVersion(String name) {
-        presentationName = name;
+        displayName = name;
     }
 
     @Override
     public String toString() {
-        return presentationName;
+        return displayName;
     }
 }

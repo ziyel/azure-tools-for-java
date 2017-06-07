@@ -1,5 +1,3 @@
-package com.microsoft.azure.hdinsight.projects;
-
 /**
  * Copyright (c) Microsoft Corporation
  * <p/>
@@ -21,7 +19,21 @@ package com.microsoft.azure.hdinsight.projects;
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+package com.microsoft.azure.hdinsight.projects;
+
 public enum HDInsightExternalSystem {
-    MAVEN,
-    SBT
+    MAVEN("Maven"),
+    SBT("SBT");
+
+    private final String displayName;
+
+    HDInsightExternalSystem(String name) {
+        displayName = name;
+    }
+
+    @Override
+    public String toString() {
+        return displayName;
+    }
 }

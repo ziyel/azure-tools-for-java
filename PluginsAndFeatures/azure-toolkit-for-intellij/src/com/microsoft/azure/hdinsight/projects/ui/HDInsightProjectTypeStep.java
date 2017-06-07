@@ -22,27 +22,60 @@
 
 package com.microsoft.azure.hdinsight.projects.ui;
 
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.projectWizard.ProjectTemplateList;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.microsoft.azure.hdinsight.projects.HDInsightExternalSystem;
 import com.microsoft.azure.hdinsight.projects.HDInsightModuleBuilder;
 import com.microsoft.azure.hdinsight.projects.HDInsightProjectTemplate;
+import com.microsoft.azure.hdinsight.projects.ScalaPluginStatus;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.HashSet;
+import java.util.Set;
 
 public class HDInsightProjectTypeStep extends ModuleWizardStep implements Disposable {
     private HDInsightModuleBuilder moduleBuilder;
+    private ScalaPluginStatus scalaPluginStatus;
+
     private JPanel mainPanel;
     private ProjectTemplateList templateList;
     private JComboBox externalSystems;
+    private JLabel externalSystemsLabel;
+
+    private static final String SCALA_PLUGIN_ID = "org.intellij.scala";
+    private static final String SCALA_PLUGIN_INSTALL_MSG = "<HTML>No Scala Intellij plugin found. " +
+            "Please <FONT color=\"#000099\"><U>CLICK</U></FONT> to install Scala plugin. " +
+            "Remember to restart Intellij when installation finished.</HTML>";
 
     public HDInsightProjectTypeStep(HDInsightModuleBuilder moduleBuilder) {
         this.moduleBuilder = moduleBuilder;
         this.templateList.setTemplates(moduleBuilder.getTemplates(), false);
+        checkScalaPlugin();
+
         this.externalSystems.addItem(HDInsightExternalSystem.MAVEN);
         this.externalSystems.addItem(HDInsightExternalSystem.SBT);
-        this.externalSystems.setSelectedItem(HDInsightExternalSystem.MAVEN);
+        setExternalSystems();
+
+        this.externalSystemsLabel.setText("Build tool:");
+        this.externalSystemsLabel.setDisplayedMnemonic('u');
+
+        this.scalaPluginStatus = ScalaPluginStatus.INSTALLED;
+
+        this.templateList.addListSelectionListener(e -> templateUpdated());
     }
 
     @Override
@@ -57,6 +90,71 @@ public class HDInsightProjectTypeStep extends ModuleWizardStep implements Dispos
     }
 
     @Override
+    public boolean validate() throws ConfigurationException {
+        return (this.scalaPluginStatus == ScalaPluginStatus.INSTALLED) &&
+        super.validate();
+    }
+
+    @Override
     public void dispose() {
+    }
+
+    private void templateUpdated() {
+        setExternalSystems();
+        checkScalaPlugin();
+    }
+
+    private void setExternalSystems() {
+        this.externalSystems.setSelectedItem(HDInsightExternalSystem.MAVEN);
+        HDInsightProjectTemplate template = (HDInsightProjectTemplate) this.templateList.getSelectedTemplate();
+        switch (template.getTemplateType()) {
+            case Java:
+            case JavaLocalSample:
+                this.externalSystems.setEnabled(false);
+                break;
+            default:
+                this.externalSystems.setEnabled(true);
+        }
+    }
+
+    private void checkScalaPlugin() {
+        HDInsightProjectTemplate template = (HDInsightProjectTemplate) this.templateList.getSelectedTemplate();
+        switch (template.getTemplateType()) {
+            case Scala:
+            case ScalaClusterSample:
+            case ScalaLocalSample:
+                if (null == PluginManager.getPlugin(PluginId.findId(SCALA_PLUGIN_ID))) {
+                    this.scalaPluginStatus = ScalaPluginStatus.NOT_INSTALLED;
+                    showScalaPluginInstallMsg();
+                    showRestartMsg();
+                }
+                return;
+            default:
+                return;
+        }
+    }
+
+    private void showScalaPluginInstallMsg() {
+        JLabel label = new JLabel(SCALA_PLUGIN_INSTALL_MSG);
+        label.setOpaque(false);
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                Set<String> pluginIds = new HashSet<>();
+                pluginIds.add(SCALA_PLUGIN_ID);
+                PluginsAdvertiser.installAndEnablePlugins(pluginIds, new Runnable() {
+                    @Override
+                    public void run() {
+                    }
+                });
+            }
+        });
+        JOptionPane.showMessageDialog(null, label, "Scala Plugin Check", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void showRestartMsg() {
+        if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
+            ApplicationManagerEx.getApplicationEx().restart(true);
+        }
     }
 }

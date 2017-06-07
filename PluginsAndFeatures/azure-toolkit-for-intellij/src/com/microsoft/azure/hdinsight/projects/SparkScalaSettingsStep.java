@@ -40,11 +40,11 @@ public class SparkScalaSettingsStep extends ModuleWizardStep {
         this.javaStep = StdModuleTypes.JAVA.modifyProjectTypeStep(settingsStep, builder);
 
         this.sparkVersionOptionsPanel = new SparkVersionOptionsPanel();
-        settingsStep.addSettingsField("Spark \u001BVersion:", this.sparkVersionOptionsPanel);
+        settingsStep.addSettingsField("Spark \u001Bversion:", this.sparkVersionOptionsPanel);
 
         if (builder.getSelectedExternalSystem() == HDInsightExternalSystem.SBT) {
             this.sbtVersionOptionsPanel = new SbtVersionOptionsPanel();
-            settingsStep.addSettingsField("Sbt Versio\u001Bn:", this.sbtVersionOptionsPanel);
+            settingsStep.addSettingsField("Sbt versio\u001Bn:", this.sbtVersionOptionsPanel);
             this.sbtVersionOptionsPanel.updateSbtVersions();
         }
     }
@@ -66,9 +66,6 @@ public class SparkScalaSettingsStep extends ModuleWizardStep {
 
     @Override
     public boolean validate() throws ConfigurationException {
-        if (this.builder.getScalaPluginStatus() != ScalaPluginStatus.INSTALLED) {
-            return false;
-        }
         return super.validate() && (javaStep == null || javaStep.validate());
     }
 

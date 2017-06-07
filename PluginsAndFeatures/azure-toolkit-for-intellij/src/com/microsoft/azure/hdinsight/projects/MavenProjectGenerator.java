@@ -28,8 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.microsoft.azure.hdinsight.common.StreamUtil;
-import com.microsoft.azure.hdinsight.projects.HDInsightTemplatesType;
-import com.microsoft.azure.hdinsight.projects.SparkVersion;
 import com.intellij.openapi.util.io.FileUtil;
 import com.microsoft.azure.hdinsight.projects.util.ProjectSampleUtil;
 import com.microsoft.azuretools.azurecommons.helpers.NotNull;
