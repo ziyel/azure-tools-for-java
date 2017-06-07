@@ -23,18 +23,20 @@
 package com.microsoft.azure.hdinsight.projects;
 
 public enum SparkVersion {
-    SPARK_1_5_2("1.5.2", "2.10.4"),
-    SPARK_1_6_2("1.6.2", "2.10.5"),
-    SPARK_1_6_3("1.6.3", "2.10.5"),
-    SPARK_2_0_2("2.0.2", "2.11.8"),
-    SPARK_2_1_0("2.1.0", "2.11.8");
+    SPARK_1_5_2("1.5.2", "2.10.4", "2.10"),
+    SPARK_1_6_2("1.6.2", "2.10.5", "2.10"),
+    SPARK_1_6_3("1.6.3", "2.10.5", "2.10"),
+    SPARK_2_0_2("2.0.2", "2.11.8", "2.11"),
+    SPARK_2_1_0("2.1.0", "2.11.8", "2.11");
 
     private final String sparkVersion;
     private final String scalaVersion;
+    private final String scalaVer;
 
-    SparkVersion(String sparkVersion, String scalaVersion) {
+    SparkVersion(String sparkVersion, String scalaVersion, String scalaVer) {
         this.sparkVersion = sparkVersion;
         this.scalaVersion = scalaVersion;
+        this.scalaVer  = scalaVer;
     }
 
     @Override
@@ -48,5 +50,9 @@ public enum SparkVersion {
 
     public String getScalaVersion() {
         return scalaVersion;
+    }
+
+    public String getScalaVer() {
+        return scalaVer;
     }
 }

@@ -32,19 +32,23 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.microsoft.azure.hdinsight.projects.util.ProjectSampleUtil;
 import com.microsoft.azuretools.azurecommons.helpers.NotNull;
 import com.microsoft.tooling.msservices.components.DefaultLoader;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.sbt.project.SbtProjectSystem;
 import org.jetbrains.sbt.project.settings.SbtProjectSettings;
 import org.jetbrains.sbt.settings.SbtSystemSettings;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 public class SbtProjectGenerator {
     private Module module;
     private HDInsightTemplatesType templatesType;
     private String sparkVersion;
     private String scalaVersion;
+    private String scalaVer;
     private String sbtVersion;
 
     public SbtProjectGenerator(@NotNull Module module,
@@ -55,6 +59,7 @@ public class SbtProjectGenerator {
         this.templatesType = templatesType;
         this.sparkVersion = sparkVersion.getSparkVersion();
         this.scalaVersion = sparkVersion.getScalaVersion();
+        this.scalaVer = sparkVersion.getScalaVer();
         this.sbtVersion = sbtVersion;
     }
 
@@ -67,6 +72,7 @@ public class SbtProjectGenerator {
             importSbtProject(root);
         } catch (Exception e) {
             DefaultLoader.getUIHelper().showError("Failed to create project", "Create Sample Project");
+            e.printStackTrace();
         }
     }
 
@@ -121,7 +127,19 @@ public class SbtProjectGenerator {
     }
 
     private String generateSbtFileContent() {
-        return "balabala";
+        List<String> sbtLines = new ArrayList<>();
+
+        sbtLines.add(String.format("name := \"%s\"", this.module.getName()));
+        sbtLines.add("version := \"1.0\"");
+        sbtLines.add(String.format("scalaVersion := \"%s\"", this.scalaVersion));
+        sbtLines.add("libraryDependencies ++= Seq(");
+        sbtLines.add(String.format("\"org.apache.spark\" %% \"spark-core_%s\" %% \"%s\",", this.scalaVer, this.sparkVersion));
+        sbtLines.add(String.format("\"org.apache.spark\" %% \"spark-sql_%s\" %% \"%s\",", this.scalaVer, this.sparkVersion));
+        sbtLines.add(String.format("\"org.apache.spark\" %% \"spark-streaming_%s\" %% \"%s\",", this.scalaVer, this.sparkVersion));
+        sbtLines.add(String.format("\"org.apache.spark\" %% \"spark-mllib_%s\" %% \"%s\"", this.scalaVer, this.sparkVersion));
+        sbtLines.add(")");
+
+        return StringUtils.join(sbtLines, "\n");
     }
 
     private void importSbtProject(String root) {
