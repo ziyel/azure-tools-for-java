@@ -166,6 +166,7 @@ public class HDInsightModuleBuilder extends JavaModuleBuilder implements ModuleB
     private void addTelemetry(HDInsightTemplatesType templatesType, SparkVersion sparkVersion) {
         Map<String, String> hdiProperties = new HashMap<String, String>();
         hdiProperties.put("Spark Version", sparkVersion.toString());
+        hdiProperties.put("Build Tool", selectedExternalSystem.toString());
 
         if (templatesType == HDInsightTemplatesType.Java) {
             AppInsightsClient.create(HDInsightBundle.message("SparkProjectSystemJavaCreation"), null, hdiProperties);
