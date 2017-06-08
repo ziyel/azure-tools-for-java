@@ -35,22 +35,17 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdve
 import com.microsoft.azure.hdinsight.projects.HDInsightExternalSystem;
 import com.microsoft.azure.hdinsight.projects.HDInsightModuleBuilder;
 import com.microsoft.azure.hdinsight.projects.HDInsightProjectTemplate;
-import com.microsoft.azure.hdinsight.projects.ScalaPluginStatus;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
 
 public class HDInsightProjectTypeStep extends ModuleWizardStep implements Disposable {
     private HDInsightModuleBuilder moduleBuilder;
 
-    private final ScalaPluginStatus scalaPluginStatus;
+    private final boolean scalaPluginInstalled;
 
     private JPanel mainPanel;
     private ProjectTemplateList templateList;
@@ -65,15 +60,15 @@ public class HDInsightProjectTypeStep extends ModuleWizardStep implements Dispos
     public HDInsightProjectTypeStep(HDInsightModuleBuilder moduleBuilder) {
         this.moduleBuilder = moduleBuilder;
 
-        this.scalaPluginStatus = (null == PluginManager.getPlugin(PluginId.findId(SCALA_PLUGIN_ID))) ?
-                ScalaPluginStatus.NOT_INSTALLED : ScalaPluginStatus.INSTALLED;
+        this.scalaPluginInstalled = (null == PluginManager.getPlugin(PluginId.findId(SCALA_PLUGIN_ID))) ?
+                false : true;
 
         this.templateList.setTemplates(moduleBuilder.getTemplates(), false);
         this.templateList.addListSelectionListener(e -> templateUpdated());
         checkScalaPlugin();
 
         this.externalSystems.addItem(HDInsightExternalSystem.MAVEN);
-        if (this.scalaPluginStatus == ScalaPluginStatus.INSTALLED) {
+        if (this.scalaPluginInstalled) {
             this.externalSystems.addItem(HDInsightExternalSystem.SBT);
         }
         setExternalSystems();
@@ -95,7 +90,7 @@ public class HDInsightProjectTypeStep extends ModuleWizardStep implements Dispos
 
     @Override
     public boolean validate() throws ConfigurationException {
-        return (this.scalaPluginStatus == ScalaPluginStatus.INSTALLED) &&
+        return (this.scalaPluginInstalled) &&
                 super.validate();
     }
 
@@ -127,7 +122,7 @@ public class HDInsightProjectTypeStep extends ModuleWizardStep implements Dispos
             case Scala:
             case ScalaClusterSample:
             case ScalaLocalSample:
-                if (this.scalaPluginStatus == ScalaPluginStatus.NOT_INSTALLED) {
+                if (!this.scalaPluginInstalled) {
                     showScalaPluginInstallMsg();
                     showRestartMsg();
                 }
