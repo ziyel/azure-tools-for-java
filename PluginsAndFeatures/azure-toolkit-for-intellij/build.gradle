@@ -9,13 +9,10 @@ buildscript {
         }
 
     }
-    dependencies {
-        classpath "org.jetbrains.intellij.plugins:gradle-intellij-plugin:0.2.0-SNAPSHOT"
-    }
 }
 
 plugins {
-    id "org.jetbrains.intellij" version "0.1.10"
+    id "org.jetbrains.intellij" version "0.2.11"
 }
 
 group 'com.microsoft.azuretools'
@@ -27,7 +24,6 @@ compileJava {
 
 tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 
-apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'checkstyle'
 apply plugin: 'findbugs'
 
