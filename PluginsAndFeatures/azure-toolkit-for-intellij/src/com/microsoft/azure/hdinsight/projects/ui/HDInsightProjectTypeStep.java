@@ -49,7 +49,8 @@ import java.util.Set;
 
 public class HDInsightProjectTypeStep extends ModuleWizardStep implements Disposable {
     private HDInsightModuleBuilder moduleBuilder;
-    private ScalaPluginStatus scalaPluginStatus;
+
+    private final ScalaPluginStatus scalaPluginStatus;
 
     private JPanel mainPanel;
     private ProjectTemplateList templateList;
@@ -63,19 +64,22 @@ public class HDInsightProjectTypeStep extends ModuleWizardStep implements Dispos
 
     public HDInsightProjectTypeStep(HDInsightModuleBuilder moduleBuilder) {
         this.moduleBuilder = moduleBuilder;
+
+        this.scalaPluginStatus = (null == PluginManager.getPlugin(PluginId.findId(SCALA_PLUGIN_ID))) ?
+                ScalaPluginStatus.NOT_INSTALLED : ScalaPluginStatus.INSTALLED;
+
         this.templateList.setTemplates(moduleBuilder.getTemplates(), false);
+        this.templateList.addListSelectionListener(e -> templateUpdated());
         checkScalaPlugin();
 
         this.externalSystems.addItem(HDInsightExternalSystem.MAVEN);
-        this.externalSystems.addItem(HDInsightExternalSystem.SBT);
+        if (this.scalaPluginStatus == ScalaPluginStatus.INSTALLED) {
+            this.externalSystems.addItem(HDInsightExternalSystem.SBT);
+        }
         setExternalSystems();
 
         this.externalSystemsLabel.setText("Build tool:");
         this.externalSystemsLabel.setDisplayedMnemonic('u');
-
-        this.scalaPluginStatus = ScalaPluginStatus.INSTALLED;
-
-        this.templateList.addListSelectionListener(e -> templateUpdated());
     }
 
     @Override
@@ -92,7 +96,7 @@ public class HDInsightProjectTypeStep extends ModuleWizardStep implements Dispos
     @Override
     public boolean validate() throws ConfigurationException {
         return (this.scalaPluginStatus == ScalaPluginStatus.INSTALLED) &&
-        super.validate();
+                super.validate();
     }
 
     @Override
@@ -123,8 +127,7 @@ public class HDInsightProjectTypeStep extends ModuleWizardStep implements Dispos
             case Scala:
             case ScalaClusterSample:
             case ScalaLocalSample:
-                if (null == PluginManager.getPlugin(PluginId.findId(SCALA_PLUGIN_ID))) {
-                    this.scalaPluginStatus = ScalaPluginStatus.NOT_INSTALLED;
+                if (this.scalaPluginStatus == ScalaPluginStatus.NOT_INSTALLED) {
                     showScalaPluginInstallMsg();
                     showRestartMsg();
                 }
