@@ -96,6 +96,7 @@ public class HDInsightProjectTypeStep extends ModuleWizardStep implements Dispos
 
     @Override
     public void dispose() {
+        moduleBuilder = null;
     }
 
     private void templateUpdated() {
